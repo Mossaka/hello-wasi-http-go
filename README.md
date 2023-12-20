@@ -2,15 +2,15 @@
 
 > This is a folked version of the [hello-wasi-http](https://github.com/sunfishcode/hello-wasi-http) repository. It has been updated to create a component out of Go code instead of Rust code. The modified README.md is below.
 
-This is a simple tutorial to get started with WASI HTTP using the
-`wasmtime serve` command in [Wasmtime] 14.0.3. It runs an HTTP server and
+This is a simple tutorial to get started with WASI HTTP (`v0.2.0-rc-2023-11-10`) using the
+`wasmtime serve` command in [Wasmtime] 15.0.1 and `spin` 2.1.0. It runs an HTTP server and
 forwards requests to a Wasm component via the [WASI HTTP] API.
 
 [Wasmtime]: https://wasmtime.dev
 [WASI HTTP]: https://github.com/WebAssembly/wasi-http/
 
 The WASI HTTP API is settling down but as of this writing not quite stable.
-This tutorial uses a snapshot of it that's implemented in Wasmtime 14.0.3.
+This tutorial uses a snapshot of it that's implemented in Wasmtime 15.0.1.
 
 With that said...
 
@@ -22,7 +22,7 @@ languages too!)
 
 [here]: https://component-model.bytecodealliance.org/language-support.html
 
-Then, [install `wit-bindgen-cli`](https://github.com/bytecodealliance/wit-bindgen) rev 1af7e87066854894ab140d2a630a0bc23c8b126f (will update this when a new version is released) with `cargo install wit-bindgen-cli --git https://github.com/bytecodealliance/wit-bindgen --rev 1af7e87066854894ab140d2a630a0bc23c8b126f`, which is a tool for generating Go bindings for WIT interfaces.
+Then, [install `wit-bindgen-cli@0.16.0`](https://github.com/bytecodealliance/wit-bindgen) with `cargo install wit-bindgen-cli@0.16.0`, which is a tool for generating Go bindings for WIT interfaces.
 
 Lastly, [install `wasm-tools`](https://github.com/bytecodealliance/wasm-tools/releases/) version 1.0.48, which is a tool for building Wasm components.
 
@@ -30,15 +30,11 @@ With that, build the Wasm component from the source in this repository:
 
 ```sh
 $ go generate
-Generating "target_world/2023_10_18/target-world.go"
-Generating "target_world/2023_10_18/target-world_types.go"
-Generating "target_world/2023_10_18/target_world.c"
-Generating "target_world/2023_10_18/target_world.h"
 Generating "target_world/2023_11_10/target-world.go"
 Generating "target_world/2023_11_10/target-world_types.go"
 Generating "target_world/2023_11_10/target_world.c"
 Generating "target_world/2023_11_10/target_world.h"
-$ tinygo build -o main_2023_10_18.wasm -target=wasi main_2023_10_18.go
+$ tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go
 ```
 
 This builds a Wasm module, `main.wasm`.
@@ -46,14 +42,14 @@ This builds a Wasm module, `main.wasm`.
 Next, we'll need to create a Wasm component.
 
 ```sh
-$ wasm-tools component embed wit main_2023_10_18.wasm > main_2023_10_18.embed.wasm
-$ wasm-tools component new main_2023_10_18.embed.wasm -o main_2023_10_18.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
+$ wasm-tools component embed wit main_2023_11_10.wasm > main_2023_11_10.embed.wasm
+$ wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
 ```
 
-This creates a Wasm component, `main_2023_10_18.component.wasm`.
+This creates a Wasm component, `main_2023_11_10.component.wasm`.
 
-To run it, we'll need Wasmtime `v14.0.3`` but not the `v15` or above. Installation instructions are
-on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v14.0.3) repo.
+To run it, we'll need Wasmtime `v15.0.1`. Installation instructions are
+on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v15.0.1) repo.
 
 Then, in a new terminal, we can run `wasmtime serve` on our Wasm component:
 
@@ -70,6 +66,17 @@ With that running, in another window, we can now make requests!
 $ curl http://localhost:8080
 Hello world from Go!!!
 ```
+
+
+### Error from wasmtime
+
+If you get an error like this:
+
+```
+ERROR wasmtime_cli::commands::serve
+```
+
+This is because the Go module does not drop the output stream derived from the outgoing body before calling `finish` (see [issue](https://github.com/bytecodealliance/wasmtime/issues/7612)) and this is an issue in the current `wit-bindgen-go` which doesn't generate any `[resource]drop` functions. This issue will be fixed in the next release of `wit-bindgen-go`.
 
 ## Notes
 
@@ -103,9 +110,9 @@ and say hi!
 
 [proxy]: https://github.com/WebAssembly/wasi-http/blob/main/wit/proxy.wit
 
-## Running in Spin 2.0
+## Running in Spin 2.1
 
-To run this component in Spin 2.0, you'll need to first download the Spin 2.0 runtime from [here](https://github.com/fermyon/spin/releases/tag/v2.0.1)
+To run this component in Spin 2.1, you'll need to first download the Spin 2.1 runtime from [here](https://github.com/fermyon/spin/releases/tag/v2.1.0)
 
 Then, you'll need to create a `spin.toml` file in the same directory as the `main.component.wasm` file. The `spin.toml` file should look like this:
 
@@ -121,12 +128,12 @@ route = "/"
 component = "hello"
 
 [component.hello]
-source = "main_2023_10_18.component.wasm"
+source = "main_2023_11_10.component.wasm"
 [component.hello.build]
 command = """go generate && 
-    tinygo build -o main_2023_10_18.wasm -target=wasi main_2023_10_18.go && 
-    wasm-tools component embed wit/2023_10_18 main_2023_10_18.wasm > main_2023_10_18.embed.wasm && 
-    wasm-tools component new main_2023_10_18.embed.wasm -o main_2023_10_18.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_10_18.wasm
+    tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
+    wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
+    wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
 """
 ```
 
@@ -137,14 +144,10 @@ Then, you can run the component with the following command:
 ```sh
 $ spin up --build
 Building component hello with `go generate && 
-    tinygo build -o main_2023_10_18.wasm -target=wasi main_2023_10_18.go && 
-    wasm-tools component embed wit/2023_10_18 main_2023_10_18.wasm > main_2023_10_18.embed.wasm && 
-    wasm-tools component new main_2023_10_18.embed.wasm -o main_2023_10_18.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_10_18.wasm
+    tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
+    wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
+    wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
 `
-Generating "target_world/2023_10_18/target-world.go"
-Generating "target_world/2023_10_18/target-world_types.go"
-Generating "target_world/2023_10_18/target_world.c"
-Generating "target_world/2023_10_18/target_world.h"
 Generating "target_world/2023_11_10/target-world.go"
 Generating "target_world/2023_11_10/target-world_types.go"
 Generating "target_world/2023_11_10/target_world.c"

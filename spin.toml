@@ -9,19 +9,10 @@ route = "/"
 component = "hello"
 
 [component.hello]
-source = "main_2023_10_18.component.wasm"
+source = "main_2023_11_10.component.wasm"
 [component.hello.build]
 command = """go generate && 
-    tinygo build -o main_2023_10_18.wasm -target=wasi main_2023_10_18.go && 
-    wasm-tools component embed wit/2023_10_18 main_2023_10_18.wasm > main_2023_10_18.embed.wasm && 
-    wasm-tools component new main_2023_10_18.embed.wasm -o main_2023_10_18.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_10_18.wasm
+    tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
+    wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
+    wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
 """
-
-# [component.hello2]
-# source = "main_2023_11_10.component.wasm"
-# [component.hello2.build]
-# command = """go generate && 
-#     tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
-#     wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
-#     wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
-# """
