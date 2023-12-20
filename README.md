@@ -67,17 +67,6 @@ $ curl http://localhost:8080
 Hello world from Go!!!
 ```
 
-
-### Error from wasmtime
-
-If you get an error like this:
-
-```
-ERROR wasmtime_cli::commands::serve
-```
-
-This is because the Go module does not drop the output stream derived from the outgoing body before calling `finish` (see [issue](https://github.com/bytecodealliance/wasmtime/issues/7612)) and this is an issue in the current `wit-bindgen-go` which doesn't generate any `[resource]drop` functions. This issue will be fixed in the next release of `wit-bindgen-go`.
-
 ## Notes
 
 `wasmtime serve` uses the [proxy] world, which is a specialized world just for
