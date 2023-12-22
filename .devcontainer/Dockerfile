@@ -13,21 +13,29 @@ RUN curl -sL "$TINYGO_URL" -o tinygo_arm64.tar.gz && \
     tar -xzf tinygo_arm64.tar.gz && \
     mv tinygo /usr/local/tinygo
 
-RUN cargo install wit-bindgen-cli --git https://github.com/bytecodealliance/wit-bindgen --rev 1af7e87066854894ab140d2a630a0bc23c8b126f
+## wit-bindgen@0.16.0
+RUN curl -LO https://github.com/bytecodealliance/wit-bindgen/releases/download/wit-bindgen-cli-0.16.0/wit-bindgen-v0.16.0-aarch64-linux.tar.gz && \
+    tar -xzf wit-bindgen-v0.16.0-aarch64-linux.tar.gz && \
+    mv wit-bindgen-v0.16.0-aarch64-linux/wit-bindgen /usr/local/bin
 
-## wasm-tools
+## wasm-tools@1.0.48
 RUN curl -LO https://github.com/bytecodealliance/wasm-tools/releases/download/wasm-tools-1.0.48/wasm-tools-1.0.48-aarch64-linux.tar.gz && \
     tar -xzf wasm-tools-1.0.48-aarch64-linux.tar.gz && \
     mv wasm-tools-1.0.48-aarch64-linux/wasm-tools /usr/local/bin
 
-## spin
-RUN curl -LO https://github.com/fermyon/spin/releases/download/v2.0.1/spin-v2.0.1-linux-aarch64.tar.gz && \
-    tar -xzf spin-v2.0.1-linux-aarch64.tar.gz && \
+## spin@2.1.0
+RUN curl -LO https://github.com/fermyon/spin/releases/download/v2.1.0/spin-v2.1.0-linux-aarch64.tar.gz && \
+    tar -xzf spin-v2.1.0-linux-aarch64.tar.gz && \
     mv spin /usr/local/bin
 
 ## go
 RUN curl -LO https://go.dev/dl/go1.21.4.linux-arm64.tar.gz && \
     tar -C /usr/local -xzf go1.21.4.linux-arm64.tar.gz
+
+## wasmstime@15.0.1
+RUN curl -LO https://github.com/bytecodealliance/wasmtime/releases/download/v15.0.1/wasmtime-v15.0.1-aarch64-linux.tar.xz && \
+    tar xf wasmtime-v15.0.1-aarch64-linux.tar.xz && \
+    mv wasmtime-v15.0.1-aarch64-linux/wasmtime /usr/local/bin
 
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOPATH="/usr/local/go"
