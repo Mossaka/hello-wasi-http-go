@@ -9,6 +9,7 @@ type HttpRequest = http.ExportsWasiHttp0_2_0_rc_2023_12_05_IncomingHandlerIncomi
 type HttpResponseWriter = http.ExportsWasiHttp0_2_0_rc_2023_12_05_IncomingHandlerResponseOutparam
 type HttpOutgoingResponse = http.WasiHttp0_2_0_rc_2023_12_05_TypesOutgoingResponse
 type HttpError = http.WasiHttp0_2_0_rc_2023_12_05_TypesErrorCode
+type HttpTrailers = http.WasiHttp0_2_0_rc_2023_12_05_TypesTrailers
 
 type HttpServer struct{}
 
@@ -21,13 +22,20 @@ func init() {
 func (h HttpServer) Handle(request HttpRequest, responseWriter HttpResponseWriter) {
 	// Construct HttpResponse to send back
 	headers := http.NewFields()
+	
 	httpResponse := http.NewOutgoingResponse(headers)
 	httpResponse.SetStatusCode(200)
-	httpResponse.Body().Unwrap().Write().Unwrap().BlockingWriteAndFlush([]uint8("Hello from Go!\n")).Unwrap()
 
-	// Send HTTP response, wrapped in Ok resource type
+	body := httpResponse.Body().Unwrap()
 	okResponse := http.Ok[HttpOutgoingResponse, HttpError](httpResponse)
 	http.StaticResponseOutparamSet(responseWriter, okResponse)
+
+	stream := body.Write().Unwrap()
+	stream.BlockingWriteAndFlush([]uint8("Hello from Go!\n")).Unwrap()
+	stream.Drop()
+
+	http.StaticOutgoingBodyFinish(body, http.None[HttpTrailers]())
+	
 }
 
 //go:generate wit-bindgen tiny-go wit/2023_12_05 --out-dir=target_world/2023_12_05 --gofmt

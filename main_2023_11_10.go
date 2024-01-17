@@ -23,12 +23,15 @@ func (h HttpServer) Handle(request HttpRequest, response_out HttpResponseWriter)
 	response := http.NewOutgoingResponse(headers)
 	response.SetStatusCode(200)
 	body := response.Body().Unwrap()
-	out := body.Write().Unwrap()
-	out.BlockingWriteAndFlush([]uint8("Hello world from Go!!!\n")).Unwrap()
-
-	// Send HTTP response
 	res_result := http.Ok[HttpOutgoingResponse, HttpErrorCode](response)
 	http.StaticResponseOutparamSet(response_out, res_result)
+
+	out := body.Write().Unwrap()
+	out.BlockingWriteAndFlush([]uint8("Hello world from Go!!!\n")).Unwrap()
+	out.Drop()
+
+	http.StaticOutgoingBodyFinish(body, http.None[HttpTrailers]())
+	
 }
 
 //go:generate wit-bindgen tiny-go wit/2023_11_10 --out-dir=target_world/2023_11_10 --gofmt

@@ -2,15 +2,16 @@
 
 > This is a folked version of the [hello-wasi-http](https://github.com/sunfishcode/hello-wasi-http) repository. It has been updated to create a component out of Go code instead of Rust code. The modified README.md is below.
 
-This is a simple tutorial to get started with WASI HTTP (`v0.2.0-rc-2023-11-10`) using the
-`wasmtime serve` command in [Wasmtime] 15.0.1 and `spin` 2.1.0. It runs an HTTP server and
+This is a simple tutorial to get started with WASI HTTP (`v0.2.0-rc-2023-12-05`) using the
+`wasmtime serve` command in [Wasmtime] 16.0.0, `spin` 2.1.0 (`spin` uses `v0.2.0-rc-2023-11-10`) and `jco serve` command in [jco] 0.14.2. It runs an HTTP server and
 forwards requests to a Wasm component via the [WASI HTTP] API.
 
 [Wasmtime]: https://wasmtime.dev
 [WASI HTTP]: https://github.com/WebAssembly/wasi-http/
+[jco]: https://github.com/bytecodealliance/jco
 
 The WASI HTTP API is settling down but as of this writing not quite stable.
-This tutorial uses a snapshot of it that's implemented in Wasmtime 15.0.1.
+This tutorial uses a snapshot of it that's implemented in Wasmtime 16.0.0.
 
 With that said...
 
@@ -22,9 +23,10 @@ languages too!)
 
 [here]: https://component-model.bytecodealliance.org/language-support.html
 
-Then, [install `wit-bindgen-cli@0.16.0`](https://github.com/bytecodealliance/wit-bindgen) with `cargo install wit-bindgen-cli@0.16.0`, which is a tool for generating Go bindings for WIT interfaces.
+<!-- Then, [install `wit-bindgen-cli@0.16.0`](https://github.com/bytecodealliance/wit-bindgen) with `cargo install wit-bindgen-cli@0.16.0`, which is a tool for generating Go bindings for WIT interfaces. -->
+Then install `wit-bindgen-cli` with `cargo install wit-bindgen-cli --git https://github.com/bytecodealliance/wit-bindgen --rev 7c9c4626945699efb0379053134f4992d3f36216`, which is a tool for generating Go bindings for WIT interfaces.
 
-Lastly, [install `wasm-tools`](https://github.com/bytecodealliance/wasm-tools/releases/) version 1.0.48, which is a tool for building Wasm components.
+Lastly, [install `wasm-tools`](https://github.com/bytecodealliance/wasm-tools/releases/) version 1.0.55, which is a tool for building Wasm components.
 
 With that, build the Wasm component from the source in this repository:
 
@@ -34,7 +36,11 @@ Generating "target_world/2023_11_10/target-world.go"
 Generating "target_world/2023_11_10/target-world_types.go"
 Generating "target_world/2023_11_10/target_world.c"
 Generating "target_world/2023_11_10/target_world.h"
-$ tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go
+Generating "target_world/2023_12_05/target-world.go"
+Generating "target_world/2023_12_05/target-world_types.go"
+Generating "target_world/2023_12_05/target_world.c"
+Generating "target_world/2023_12_05/target_world.h"
+$ tinygo build -o main_2023_12_05.wasm -target=wasi main_2023_12_05.go
 ```
 
 This builds a Wasm module, `main.wasm`.
@@ -42,19 +48,19 @@ This builds a Wasm module, `main.wasm`.
 Next, we'll need to create a Wasm component.
 
 ```sh
-$ wasm-tools component embed wit main_2023_11_10.wasm > main_2023_11_10.embed.wasm
-$ wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
+$ wasm-tools component embed wit main_2023_12_05.wasm > main_2023_12_05.embed.wasm
+$ wasm-tools component new main_2023_12_05.embed.wasm -o main_2023_12_05.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_12_05.wasm
 ```
 
-This creates a Wasm component, `main_2023_11_10.component.wasm`.
+This creates a Wasm component, `main_2023_12_05.component.wasm`.
 
-To run it, we'll need Wasmtime `v15.0.1`. Installation instructions are
-on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v15.0.1) repo.
+To run it, we'll need Wasmtime `v16.0.0`. Installation instructions are
+on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v16.0.0) repo.
 
 Then, in a new terminal, we can run `wasmtime serve` on our Wasm component:
 
 ```
-$ wasmtime serve main.component.wasm
+$ wasmtime serve -Scommon main_2023_12_05.component.wasm
 ```
 
 This starts up an HTTP server on `0.0.0.0:8080` (the specific address and port
@@ -124,9 +130,20 @@ command = """go generate &&
     wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
     wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
 """
+
+[component.hello2]
+source = "main_2023_12_05.component.wasm"
+[component.hello2.build]
+command = """go generate && 
+    tinygo build -o main_2023_12_05.wasm -target=wasi main_2023_12_05.go && 
+    wasm-tools component embed wit/2023_12_05 main_2023_12_05.wasm > main_2023_12_05.embed.wasm && 
+    wasm-tools component new main_2023_12_05.embed.wasm -o main_2023_12_05.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_12_05.wasm
+"""
 ```
 
-This repo has a `spin.toml` file already
+This repo has a `spin.toml` file already.
+
+> Note: The latest `spin` version only supports `wasi-http` version `2023_11_10`, so the only component used in spin HTTP trigger is the 2023_11_10 version of the component.
 
 Then, you can run the component with the following command:
 
@@ -156,7 +173,25 @@ $ curl http://127.0.0.1:3000
 Hello world from Go!!!
 ```
 
+## Running in jco 0.14.2
 
+To run this component in jco 0.14.2, you'll need to first download the jco 0.14.2 runtime 
+```
+npm install @bytecodealliance/jco@0.14.2 -g
+```
+
+and then run the following command:
+
+```sh
+$ jco serve main_2023_12_05.component.wasm
+```
+
+With that running, in another window, we can now make requests!
+
+```
+$ curl http://localhost:8000
+Hello world from Go!!!
+```
 
 ## Creating this repo
 
