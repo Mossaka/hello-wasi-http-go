@@ -24,26 +24,26 @@ RUN curl -LO https://github.com/bytecodealliance/wasm-tools/releases/download/wa
     tar -xzf wasm-tools-1.0.55-aarch64-linux.tar.gz && \
     mv wasm-tools-1.0.55-aarch64-linux/wasm-tools /usr/local/bin
 
-## spin@2.1.0
-RUN curl -LO https://github.com/fermyon/spin/releases/download/v2.1.0/spin-v2.1.0-linux-aarch64.tar.gz && \
-    tar -xzf spin-v2.1.0-linux-aarch64.tar.gz && \
+## spin@2.2.0
+RUN curl -LO https://github.com/fermyon/spin/releases/download/v2.2.0/spin-v2.2.0-linux-aarch64.tar.gz && \
+    tar -xzf spin-v2.2.0-linux-aarch64.tar.gz && \
     mv spin /usr/local/bin
 
 ## go
 RUN curl -LO https://go.dev/dl/go1.21.4.linux-arm64.tar.gz && \
     tar -C /usr/local -xzf go1.21.4.linux-arm64.tar.gz
 
-## wasmstime@16.0.0
-RUN curl -LO https://github.com/bytecodealliance/wasmtime/releases/download/v16.0.0/wasmtime-v16.0.0-aarch64-linux.tar.xz && \
-    tar xf wasmtime-v16.0.0-aarch64-linux.tar.xz && \
-    mv wasmtime-v16.0.0-aarch64-linux/wasmtime /usr/local/bin
+## wasmstime@17.0.0
+RUN curl -LO https://github.com/bytecodealliance/wasmtime/releases/download/v17.0.0/wasmtime-v17.0.0-aarch64-linux.tar.xz && \
+    tar xf wasmtime-v17.0.0-aarch64-linux.tar.xz && \
+    mv wasmtime-v17.0.0-aarch64-linux/wasmtime /usr/local/bin
 
 ## install npm
 RUN curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash - &&\
     sudo apt-get install -y nodejs
 
-## jco
-RUN npm install @bytecodealliance/jco@0.14.2 -g 
+## jco@1.0.0
+RUN npm install @bytecodealliance/jco@1.0.0 -g 
 
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOPATH="/usr/local/go"

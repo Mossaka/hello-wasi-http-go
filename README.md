@@ -2,8 +2,8 @@
 
 > This is a folked version of the [hello-wasi-http](https://github.com/sunfishcode/hello-wasi-http) repository. It has been updated to create a component out of Go code instead of Rust code. The modified README.md is below.
 
-This is a simple tutorial to get started with WASI HTTP (`v0.2.0-rc-2023-12-05`) using the
-`wasmtime serve` command in [Wasmtime] 16.0.0, `spin` 2.1.0 (`spin` uses `v0.2.0-rc-2023-11-10`) and `jco serve` command in [jco] 0.14.2. It runs an HTTP server and
+This is a simple tutorial to get started with WASI HTTP `v0.2.0` using the
+`wasmtime serve` command in [Wasmtime] 17.0.0, `spin` 2.2.0  and `jco serve` command in [jco] 1.0.0. It runs an HTTP server and
 forwards requests to a Wasm component via the [WASI HTTP] API.
 
 [Wasmtime]: https://wasmtime.dev
@@ -32,15 +32,11 @@ With that, build the Wasm component from the source in this repository:
 
 ```sh
 $ go generate
-Generating "target_world/2023_11_10/target-world.go"
-Generating "target_world/2023_11_10/target-world_types.go"
-Generating "target_world/2023_11_10/target_world.c"
-Generating "target_world/2023_11_10/target_world.h"
-Generating "target_world/2023_12_05/target-world.go"
-Generating "target_world/2023_12_05/target-world_types.go"
-Generating "target_world/2023_12_05/target_world.c"
-Generating "target_world/2023_12_05/target_world.h"
-$ tinygo build -o main_2023_12_05.wasm -target=wasi main_2023_12_05.go
+Generating "target_world/target-world.go"
+Generating "target_world/target-world_types.go"
+Generating "target_world/target_world.c"
+Generating "target_world/target_world.h"
+$ tinygo build -o main.wasm -target=wasi main.go
 ```
 
 This builds a Wasm module, `main.wasm`.
@@ -48,19 +44,19 @@ This builds a Wasm module, `main.wasm`.
 Next, we'll need to create a Wasm component.
 
 ```sh
-$ wasm-tools component embed wit main_2023_12_05.wasm > main_2023_12_05.embed.wasm
-$ wasm-tools component new main_2023_12_05.embed.wasm -o main_2023_12_05.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_12_05.wasm
+$ wasm-tools component embed wit main.wasm > main.embed.wasm
+$ wasm-tools component new main.embed.wasm -o main.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
 ```
 
-This creates a Wasm component, `main_2023_12_05.component.wasm`.
+This creates a Wasm component, `main.component.wasm`.
 
-To run it, we'll need Wasmtime `v16.0.0`. Installation instructions are
-on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v16.0.0) repo.
+To run it, we'll need Wasmtime `17.0.0`. Installation instructions are
+on [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v17.0.0) repo.
 
-Then, in a new terminal, we can run `wasmtime serve` on our Wasm component:
+Then, in a new terminal, we can run `wasmtime serve -Scommon` on our Wasm component:
 
 ```
-$ wasmtime serve -Scommon main_2023_12_05.component.wasm
+$ wasmtime serve -Scommon main.component.wasm
 ```
 
 This starts up an HTTP server on `0.0.0.0:8080` (the specific address and port
@@ -105,9 +101,9 @@ and say hi!
 
 [proxy]: https://github.com/WebAssembly/wasi-http/blob/main/wit/proxy.wit
 
-## Running in Spin 2.1
+## Running in Spin 2.2
 
-To run this component in Spin 2.1, you'll need to first download the Spin 2.1 runtime from [here](https://github.com/fermyon/spin/releases/tag/v2.1.0)
+To run this component in Spin 2.2, you'll need to first download the Spin 2.2 runtime from [here](https://github.com/fermyon/spin/releases/tag/v2.2.0)
 
 Then, you'll need to create a `spin.toml` file in the same directory as the `main.component.wasm` file. The `spin.toml` file should look like this:
 
@@ -123,41 +119,30 @@ route = "/"
 component = "hello"
 
 [component.hello]
-source = "main_2023_11_10.component.wasm"
+source = "main.component.wasm"
 [component.hello.build]
 command = """go generate && 
-    tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
-    wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
-    wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
-"""
-
-[component.hello2]
-source = "main_2023_12_05.component.wasm"
-[component.hello2.build]
-command = """go generate && 
-    tinygo build -o main_2023_12_05.wasm -target=wasi main_2023_12_05.go && 
-    wasm-tools component embed wit/2023_12_05 main_2023_12_05.wasm > main_2023_12_05.embed.wasm && 
-    wasm-tools component new main_2023_12_05.embed.wasm -o main_2023_12_05.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_12_05.wasm
+    tinygo build -o main.wasm -target=wasi main.go && 
+    wasm-tools component embed wit main.wasm > main.embed.wasm && 
+    wasm-tools component new main.embed.wasm -o main.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
 """
 ```
 
 This repo has a `spin.toml` file already.
-
-> Note: The latest `spin` version only supports `wasi-http` version `2023_11_10`, so the only component used in spin HTTP trigger is the 2023_11_10 version of the component.
 
 Then, you can run the component with the following command:
 
 ```sh
 $ spin up --build
 Building component hello with `go generate && 
-    tinygo build -o main_2023_11_10.wasm -target=wasi main_2023_11_10.go && 
-    wasm-tools component embed wit/2023_11_10 main_2023_11_10.wasm > main_2023_11_10.embed.wasm && 
-    wasm-tools component new main_2023_11_10.embed.wasm -o main_2023_11_10.component.wasm --adapt wasi_snapshot_preview1.reactor.2023_11_10.wasm
+    tinygo build -o main.wasm -target=wasi main.go && 
+    wasm-tools component embed wit main.wasm > main.embed.wasm && 
+    wasm-tools component new main.embed.wasm -o main.component.wasm --adapt wasi_snapshot_preview1.reactor.wasm
 `
-Generating "target_world/2023_11_10/target-world.go"
-Generating "target_world/2023_11_10/target-world_types.go"
-Generating "target_world/2023_11_10/target_world.c"
-Generating "target_world/2023_11_10/target_world.h"
+Generating "target_world/target-world.go"
+Generating "target_world/target-world_types.go"
+Generating "target_world/target_world.c"
+Generating "target_world/target_world.h"
 Finished building all Spin components
 Logging component stdio to ".spin/logs/"
 
@@ -173,17 +158,17 @@ $ curl http://127.0.0.1:3000
 Hello world from Go!!!
 ```
 
-## Running in jco 0.14.2
+## Running in jco 1.0.0
 
-To run this component in jco 0.14.2, you'll need to first download the jco 0.14.2 runtime 
+To run this component in jco 1.0.0, you'll need to first download the jco 1.0.0 runtime 
 ```
-npm install @bytecodealliance/jco@0.14.2 -g
+npm install @bytecodealliance/jco@1.0.0 -g
 ```
 
 and then run the following command:
 
 ```sh
-$ jco serve main_2023_12_05.component.wasm
+$ jco serve main.component.wasm
 ```
 
 With that running, in another window, we can now make requests!
@@ -192,7 +177,3 @@ With that running, in another window, we can now make requests!
 $ curl http://localhost:8000
 Hello world from Go!!!
 ```
-
-## Creating this repo
-
-TODO: Add instructions for creating this repo from scratch.
